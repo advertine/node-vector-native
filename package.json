@@ -1,0 +1,31 @@
+{
+  "name": "vector-native",
+  "description": "Multi-dimensional all purpose vector object bindings for nodejs",
+  "keywords": [
+    "vector"
+  ],
+  "version": "0.0.0",
+  "license": "MIT",
+  "author": "Rafał Michalski <royal@advertine.com>",
+  "contributors": [],
+  "homepage": "http://github.com/advertine/node-vector-native",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/advertine/node-vector-native.git"
+  },
+  "scripts": {
+    "test": "tap-prettify ./test/test.js"
+  },
+  "main": "index.js",
+  "engines": {
+    "node": ">=0.8.0"
+  },
+  "dependencies": {
+    "nan": "~1.6"
+  },
+  "devDependencies": {
+    "tap": "*",
+    "tap-prettify": "*",
+    "ben": "*"
+  }
+}
