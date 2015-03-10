@@ -26,10 +26,12 @@ namespace NodeVector {
       virtual ~NativeVector(void);
       static NAN_METHOD(New);
       static NAN_METHOD(Add);
-      // static NAN_METHOD(Subtract);
-      // static NAN_METHOD(Multiply);
-      // static NAN_METHOD(ScalarMultiply);
+      static NAN_METHOD(Multiply);
+      static NAN_METHOD(ScalarMultiply);
       static NAN_GETTER(GetSize);
+      static NAN_GETTER(GetAverage);
+      static NAN_GETTER(GetVariance);
+      static NAN_GETTER(GetSigma);
       static NAN_INDEX_GETTER(GetDimension);
       static NAN_INDEX_SETTER(SetDimension);
       static NAN_METHOD(ValueOf);
@@ -37,7 +39,9 @@ namespace NodeVector {
       static NAN_METHOD(GetBuffer);
 
     private:
+      NAN_INLINE static void FreeBufferData(char *, void *data);
       bool Add(Local<Value> value);
+      bool Multiply(Local<Value> value);
       void AssignFromJSObject(Handle<Object> object);
   };
 
