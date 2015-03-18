@@ -28,7 +28,8 @@ namespace NodeVector {
       static NAN_METHOD(Add);
       static NAN_METHOD(Multiply);
       static NAN_METHOD(ScalarMultiply);
-      static NAN_GETTER(GetSize);
+      static NAN_METHOD(Normalize);
+      static NAN_GETTER(GetLength);
       static NAN_GETTER(GetAverage);
       static NAN_GETTER(GetVariance);
       static NAN_GETTER(GetSigma);

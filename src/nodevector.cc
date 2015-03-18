@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <algorithm>
 #include "nodevector.h"
 
 namespace NodeVector {
@@ -14,6 +15,9 @@ namespace NodeVector {
   using v8::FunctionTemplate;
   using v8::ObjectTemplate;
   using v8::Persistent;
+  using v8::PropertyAttribute;
+  using v8::ReadOnly;
+  using v8::DontDelete;
   using node::ObjectWrap;
 
   Persistent<FunctionTemplate> NativeVector::constructor;
@@ -37,7 +41,7 @@ namespace NodeVector {
     i_t->SetIndexedPropertyHandler(GetDimension, SetDimension);
 
     Local<ObjectTemplate> proto = tpl->PrototypeTemplate();
-    proto->SetAccessor(NanNew<String>("size"), GetSize);
+    proto->SetAccessor(NanNew<String>("length"), GetLength);
     proto->SetAccessor(NanNew<String>("average"), GetAverage);
     proto->SetAccessor(NanNew<String>("variance"), GetVariance);
     proto->SetAccessor(NanNew<String>("sigma"), GetSigma);
@@ -45,9 +49,20 @@ namespace NodeVector {
     NODE_SET_PROTOTYPE_METHOD(tpl, "add", Add);
     NODE_SET_PROTOTYPE_METHOD(tpl, "multiply", Multiply);
     NODE_SET_PROTOTYPE_METHOD(tpl, "scalar", ScalarMultiply);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "normalize", Normalize);
     NODE_SET_PROTOTYPE_METHOD(tpl, "toObject", ToObject);
     NODE_SET_PROTOTYPE_METHOD(tpl, "valueOf", ValueOf);
     NODE_SET_PROTOTYPE_METHOD(tpl, "getBuffer", GetBuffer);
+
+    tpl->Set( NanNew<String>("BYTEARRAY_ELEMENT_SIZE"),
+              NanNew<Uint32>((uint32_t) sizeof(vec_dim_pair_t)),
+              static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+    tpl->Set( NanNew<String>("BYTEARRAY_DIM_OFFSET"),
+              NanNew<Uint32>((int32_t) offsetof(vec_dim_pair_t, dim)),
+              static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
+    tpl->Set( NanNew<String>("BYTEARRAY_VALUE_OFFSET"),
+              NanNew<Uint32>((int32_t) offsetof(vec_dim_pair_t, value)),
+              static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
 
     exports->Set( NanNew<String>("Vector"), NanNew<FunctionTemplate>(constructor)->GetFunction() );
   }
@@ -94,7 +109,7 @@ namespace NodeVector {
     }
   }
 
-  NAN_GETTER(NativeVector::GetSize)
+  NAN_GETTER(NativeVector::GetLength)
   {
     NanScope();
     NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
@@ -154,14 +169,23 @@ namespace NodeVector {
 
     vec_value_t cutoff = 0.0;
 
-    if ( args.Length() > 0 ) {
+    if ( args.Length() > 0 && args[0]->IsNumber() ) {
       cutoff = (vec_value_t) args[0]->NumberValue();
       vec_value_t average;
       cutoff *= vector->sigma(&average);
       cutoff = average - cutoff;
     }
 
-    size_t size = vector->CopyToArray( vecdata, orig_count, cutoff ) * sizeof(vec_dim_pair_t);
+    size_t count = vector->CopyToArray( vecdata, orig_count, cutoff );
+
+    if ( args.Length() > 1 && args[1]->BooleanValue() ) {
+      vec_sort_by_value_desc( vecdata, count );
+      if ( args[1]->IsNumber() ) {
+        count = std::min( count, (size_t) args[1]->IntegerValue() );
+      }
+    }
+
+    size_t size = count * sizeof(vec_dim_pair_t);
 
     if ( size != orig_size )
       vecdata = (vec_dim_pair_t *) realloc(vecdata, size);
@@ -265,6 +289,25 @@ namespace NodeVector {
     }
 
     return NanThrowTypeError("first argument should be a Vector");
+  }
+
+  NAN_METHOD(NativeVector::Normalize)
+  {
+    NanScope();
+
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+
+    vec_value_t sum;
+
+    if ( args.Length() > 0 ) {
+      sum = args[0]->NumberValue();
+    } else {
+      sum = +(*vector);
+    }
+
+    (*vector) /= sum;
+
+    NanReturnValue( args.This() );
   }
 
   NAN_GETTER(NativeVector::GetAverage)

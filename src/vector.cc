@@ -78,7 +78,7 @@ size_t Vector::CopyToArray(vec_dim_pair_t * const out, size_t const capacity, ve
   return (size_t)(ptr - out);
 }
 
-inline size_t Vector::Size() const
+size_t Vector::Size() const
 {
   return vec.size();
 }
@@ -142,6 +142,20 @@ Vector &Vector::operator *=(vec_value_t scale)
   return *this;
 }
 
+Vector &Vector::operator /=(vec_value_t scale)
+{
+  DimValueMap::type::iterator it = vec.begin();
+  vec_value_t nval;
+  while ( it != vec.end() ) {
+    if ( (nval = it->second / scale) == 0.0 ) {
+      vec.erase(it++);
+    } else {
+      (it++)->second = nval;
+    }
+  }
+  return *this;
+}
+
 vec_value_t Vector::operator *(Vector const& ovec) const
 {
   vec_value_t sum = 0.0;
@@ -155,6 +169,17 @@ vec_value_t Vector::operator *(Vector const& ovec) const
 
 vec_value_t Vector::operator +() const
 {
+  vec_value_t sum = 0.0, value;
+  DimValueMap::type::const_iterator it = vec.begin();
+  for (; it != vec.end(); ++it ) {
+    value = it->second;
+    sum += value * value;
+  }
+  return sqrt(sum);
+}
+
+vec_value_t Vector::sum() const
+{
   vec_value_t sum = 0.0;
   DimValueMap::type::const_iterator it = vec.begin();
   for (; it != vec.end(); ++it ) {
@@ -165,8 +190,8 @@ vec_value_t Vector::operator +() const
 
 vec_value_t Vector::average() const
 {
-  vec_value_t sum = +(*this);
-  return sum / (vec_value_t) Size();
+  vec_value_t sum = this->sum();
+  return sum / (vec_value_t) vec.size();
 }
 
 vec_value_t Vector::sigma(vec_value_t *average) const
@@ -176,7 +201,7 @@ vec_value_t Vector::sigma(vec_value_t *average) const
 
 vec_value_t Vector::variance(vec_value_t *average) const
 {
-  vec_value_t sum = 0.0, sum2 = 0.0, size = (vec_value_t) Size(), value;
+  vec_value_t sum = 0.0, sum2 = 0.0, size = (vec_value_t) vec.size(), value;
   DimValueMap::type::const_iterator it = vec.begin();
   for (; it != vec.end(); ++it ) {
     value = it->second;
@@ -188,16 +213,3 @@ vec_value_t Vector::variance(vec_value_t *average) const
     *average = sum;
   return sum2/size - (sum*sum);
 }
-/*
-int Vector::CompareDim(const void *ap, const void *bp)
-{
-  const vec_dim_t a = *(vec_dim_t *) ap;
-  const vec_dim_t b = *(vec_dim_t *) bp;
-  if (a < b)
-      return -1;
-  else if(a > b)
-      return 1;
-  else
-      return 0;
-}
-*/
