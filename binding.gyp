@@ -4,7 +4,8 @@
       'target_name': 'nodevector',
       'sources': [
         'src/vector.cc',
-        'src/nodevector.cc'
+        'src/nodevector.cc',
+        'src/nodemodule.cc'
       ],
       'include_dirs': [
         "<!(node -e \"require('nan')\")",

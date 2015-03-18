@@ -332,5 +332,3 @@ namespace NodeVector {
   }
 
 }
-
-NODE_MODULE(nodevector, NodeVector::NativeVector::Init)
