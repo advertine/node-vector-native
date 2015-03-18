@@ -5,6 +5,8 @@ Vector bindings for node
 Installation:
 -------------
 
+[![Build Status][BS img]][Build Status]
+
 ```
 npm install advertine/vector-native
 ```
