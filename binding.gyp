@@ -10,13 +10,7 @@
         "<!(node -e \"require('nan')\")",
         'src'
       ],
-      'defines': [
-      ],
       'conditions': [
-        ['target_arch!="x64"', {
-          'defines': [
-          ]
-        }],
         ['OS=="win"', {
           'msvs_settings': {
             'VCCLCompilerTool': {
