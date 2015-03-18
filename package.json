@@ -24,7 +24,7 @@
     "nan": "~1.6"
   },
   "devDependencies": {
-    "tap": "*",
+    "tap": "~0.5",
     "tap-prettify": "*",
     "ben": "*"
   }
