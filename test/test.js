@@ -66,6 +66,37 @@ test("Vector should initialize from Vector, Object or Buffer", function(t) {
   t.end();
 });
 
+test("Vector should be comparable", function(t) {
+  var vec1 = new Vector();
+  var vec2 = new Vector(null);
+  var vec3 = new Vector(void(0));
+  t.strictEqual(vec1.equals(vec2), true);
+  t.strictEqual(vec1.equals(vec3), true);
+  t.strictEqual(vec2.equals(vec3), true);
+
+  vec1[1] = 1;
+  t.strictEqual(vec1.equals(vec2), false);
+  vec2[1] = 1;
+  t.strictEqual(vec1.equals(vec2), true);
+  vec2[1] = 0.9999;
+  t.strictEqual(vec1.equals(vec2), false);
+  vec1[1] = 0.9999;
+  t.strictEqual(vec1.equals(vec2), true);
+  vec1[1] = 0;
+  t.strictEqual(vec1.equals(vec2), false);
+  t.strictEqual(vec1.length, 0);
+
+  vec3[(Math.random()*0x7FFFFFFF)|0] = Math.random();
+  vec3[(Math.random()*0x7FFFFFFF)|0] = Math.random();
+  vec3[(Math.random()*0x7FFFFFFF)|0] = Math.random();
+
+  t.strictEqual(vec1.equals(vec3), false);
+  t.strictEqual(vec3.equals(new Vector(vec3)), true);
+  t.strictEqual(vec3.equals(vec3), true);
+
+  t.end();
+});
+
 test("Vector should convert to Object", function(t) {
   var vec = new Vector();
   t.deepEqual(vec.toObject(), {});

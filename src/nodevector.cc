@@ -8,6 +8,7 @@ namespace NodeVector {
   using v8::Value;
   using v8::Object;
   using v8::Array;
+  using v8::Boolean;
   using v8::Number;
   using v8::Uint32;
   using v8::String;
@@ -53,6 +54,7 @@ namespace NodeVector {
     NODE_SET_PROTOTYPE_METHOD(tpl, "toObject", ToObject);
     NODE_SET_PROTOTYPE_METHOD(tpl, "valueOf", ValueOf);
     NODE_SET_PROTOTYPE_METHOD(tpl, "getBuffer", GetBuffer);
+    NODE_SET_PROTOTYPE_METHOD(tpl, "equals", Equals);
 
     tpl->Set( NanNew<String>("BYTEARRAY_ELEMENT_SIZE"),
               NanNew<Uint32>((uint32_t) sizeof(vec_dim_pair_t)),
@@ -109,28 +111,6 @@ namespace NodeVector {
       NanReturnValue(
         NanNew<FunctionTemplate>(constructor)->GetFunction()->NewInstance(argc, argv) );
     }
-  }
-
-  NAN_GETTER(NativeVector::GetLength)
-  {
-    NanScope();
-    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
-    NanReturnValue( NanNew<Uint32>( (unsigned int) vector->Size() ) );
-  }
-
-  NAN_INDEX_GETTER(NativeVector::GetDimension)
-  {
-    NanScope();
-    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
-    NanReturnValue( NanNew<Number>( (*vector)[index] ) );
-  }
-
-  NAN_INDEX_SETTER(NativeVector::SetDimension)
-  {
-    NanScope();
-    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
-    vector->Set(index, value->NumberValue());
-    NanReturnValue( value );
   }
 
   NAN_METHOD(NativeVector::ValueOf)
@@ -312,6 +292,26 @@ namespace NodeVector {
     NanReturnValue( args.This() );
   }
 
+  NAN_METHOD(NativeVector::Equals)
+  {
+    NanScope();
+
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    if ( args.Length() > 0 && NanHasInstance(NativeVector::constructor, args[0]) ) {
+      NativeVector const *other = ObjectWrap::Unwrap<NativeVector>( args[0].As<Object>() );
+      NanReturnValue( NanNew<Boolean>(*vector == *other) );
+    }
+
+    NanReturnValue( NanFalse() );
+  }
+
+  NAN_GETTER(NativeVector::GetLength)
+  {
+    NanScope();
+    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    NanReturnValue( NanNew<Uint32>( (unsigned int) vector->Size() ) );
+  }
+
   NAN_GETTER(NativeVector::GetAverage)
   {
     NanScope();
@@ -331,6 +331,21 @@ namespace NodeVector {
     NanScope();
     NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
     NanReturnValue( NanNew<Number>( vector->sigma() ) );
+  }
+
+  NAN_INDEX_GETTER(NativeVector::GetDimension)
+  {
+    NanScope();
+    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    NanReturnValue( NanNew<Number>( (*vector)[index] ) );
+  }
+
+  NAN_INDEX_SETTER(NativeVector::SetDimension)
+  {
+    NanScope();
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    vector->Set(index, value->NumberValue());
+    NanReturnValue( value );
   }
 
 }

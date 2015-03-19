@@ -83,6 +83,16 @@ size_t Vector::Size() const
   return vec.size();
 }
 
+bool Vector::operator ==(Vector const& ovec)
+{
+  return vec == ovec.vec;
+}
+
+bool Vector::operator !=(Vector const& ovec)
+{
+  return vec != ovec.vec;
+}
+
 vec_value_t Vector::operator [](vec_dim_t dim) const
 {
   DimValueMap::type::const_iterator it = vec.find(dim);

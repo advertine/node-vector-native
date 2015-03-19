@@ -32,13 +32,15 @@ class Vector {
     vec_value_t operator *(Vector const& ovec) const;
     vec_value_t operator +() const;
 
+    bool operator ==(Vector const& ovec);
+    bool operator !=(Vector const& ovec);
+
     vec_value_t operator [](vec_dim_t dim) const;
 
     vec_value_t sum() const;
     vec_value_t average() const;
     vec_value_t sigma(vec_value_t *average = NULL) const;
     vec_value_t variance(vec_value_t *average = NULL) const;
-    // static int CompareDim(const void *ap, const void *bp);
 
   protected:
     DimValueMap::type vec;
