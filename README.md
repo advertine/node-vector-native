@@ -24,10 +24,41 @@ v[1] = 0.5;
 var b = new Vector({1: 0.5, 2: 0.25});
 console.log(v.toObject());
 v.add(b);
+v.multiply(b);
+v.multiply(10);
+v.normalize();
+v.scalar(b);
+v.average;
+v.variance;
+v.length;
+v.valueOf();
 console.log(v.toObject());
+console.log(v.getBuffer());
+new Vector(v.getBuffer())
 
 ```
 
+Use in your own native extension
+--------------------------------
+
+in bindings.gyp:
+
+```python
+      ...
+      'variables': {
+        'VECTOR_NATIVE_DIR%': "<!(node -e \"require('vector-native/include_dirs')\")"
+      },
+      'include_dirs': [
+        "<!(node -e \"require('nan')\")",
+        '<(VECTOR_NATIVE_DIR)',
+        ...
+      ]
+      'sources': [
+        '<(VECTOR_NATIVE_DIR)/vector.cc',
+        '<(VECTOR_NATIVE_DIR)/nodevector.cc',
+        ...
+      ]
+```
 
 Bugs, limitations, caveats
 --------------------------
