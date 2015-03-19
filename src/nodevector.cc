@@ -76,7 +76,7 @@ namespace NodeVector {
       NativeVector *vector;
 
       if ( args.Length() > 0 ) {
-        if (node::Buffer::HasInstance(args[0])) {
+        if ( node::Buffer::HasInstance(args[0]) ) {
           Local<Object> buffer = args[0].As<Object>();
           vector = new NativeVector(
             (vec_dim_pair_t *)node::Buffer::Data(buffer),
@@ -89,8 +89,10 @@ namespace NodeVector {
             vector = new NativeVector();
             vector->AssignFromJSObject( args[0].As<Object>() );
           }
-        } else 
-          return NanThrowTypeError("first argument should be Buffer or an Object");
+        } else if ( args[0]->IsNull() || args[0]->IsUndefined() ) {
+          vector = new NativeVector();
+        } else
+          return NanThrowTypeError("first argument should be a Buffer or an Object");
       } else
         vector = new NativeVector();
 

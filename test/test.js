@@ -10,6 +10,16 @@ test("should have Vector function", function(t) {
   t.end();
 });
 
+test("Vector should initialize with null or undefined parameter", function(t) {
+  var vec1 = new Vector();
+  var vec2 = new Vector(null);
+  var vec3 = new Vector(void(0));
+  t.strictEqual(vec1.length, 0)
+  t.strictEqual(vec2.length, 0)
+  t.strictEqual(vec3.length, 0)
+  t.end();
+});
+
 test("Vector should have dimension getters and setters", function(t) {
   var vec = new Vector();
   t.strictEqual(vec.length, 0);
