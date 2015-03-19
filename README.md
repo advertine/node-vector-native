@@ -24,6 +24,7 @@ v[1] = 0.5;
 var b = new Vector({1: 0.5, 2: 0.25});
 console.log(v.toObject());
 v.add(b);
+v.equals(b);
 v.multiply(b);
 v.multiply(10);
 v.normalize();
