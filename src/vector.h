@@ -18,6 +18,7 @@ class Vector {
     size_t CopyToArray(vec_dim_pair_t * const out, size_t const capacity, vec_value_t cutoff = 0.0) const;
     size_t Size(void) const;
 
+    void Clear(void);
     void Set(vec_dim_pair_t const * ovec, size_t const vsize);
     void Set(vec_dim_t dim, vec_value_t value);
     bool Has(vec_dim_t dim) const;

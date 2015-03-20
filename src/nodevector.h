@@ -25,6 +25,7 @@ namespace NodeVector {
       NativeVector(vec_dim_pair_t const * ovec, size_t const vsize);
       virtual ~NativeVector(void);
       static NAN_METHOD(New);
+      static NAN_METHOD(Clear);
       static NAN_METHOD(Add);
       static NAN_METHOD(Multiply);
       static NAN_METHOD(ScalarMultiply);

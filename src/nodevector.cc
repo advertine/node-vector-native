@@ -53,6 +53,7 @@ namespace NodeVector {
     proto->SetAccessor(NanNew<String>("variance"), GetVariance);
     proto->SetAccessor(NanNew<String>("sigma"), GetSigma);
 
+    NODE_SET_PROTOTYPE_METHOD(tpl, "clear", Clear);
     NODE_SET_PROTOTYPE_METHOD(tpl, "add", Add);
     NODE_SET_PROTOTYPE_METHOD(tpl, "multiply", Multiply);
     NODE_SET_PROTOTYPE_METHOD(tpl, "scalar", ScalarMultiply);
@@ -226,6 +227,17 @@ namespace NodeVector {
       if ( ! vector->Add( args[0] ) )
         return NanThrowTypeError("first argument should be a Buffer, Vector or an Array");
     }
+
+    NanReturnValue( args.This() );
+  }
+
+  NAN_METHOD(NativeVector::Clear)
+  {
+    NanScope();
+
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+
+    vector->Vector::Clear();
 
     NanReturnValue( args.This() );
   }

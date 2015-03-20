@@ -25,6 +25,11 @@ void Vector::Assign(vec_dim_pair_t const * inp, size_t const vsize)
   }
 }
 
+void Vector::Clear()
+{
+  vec.clear();
+}
+
 void Vector::Set(vec_dim_pair_t const * ovec, size_t const vsize)
 {
   vec.clear();

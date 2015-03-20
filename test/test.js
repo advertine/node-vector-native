@@ -40,6 +40,24 @@ test("Vector should have dimension getters and setters", function(t) {
   t.end();
 });
 
+test("Vector should be clearable", function(t) {
+  var vec = new Vector();
+  t.strictEqual(vec.length, 0);
+  vec[1] = Math.random();
+  vec[10] = Math.random();
+  vec[100] = Math.random();
+  t.notEqual(vec[1], 0);
+  t.notEqual(vec[10], 0);
+  t.notEqual(vec[100], 0);
+  t.strictEqual(vec.length, 3);
+  t.strictEqual(vec.clear(), vec);
+  t.strictEqual(vec[1], 0);
+  t.strictEqual(vec[10], 0);
+  t.strictEqual(vec[100], 0);
+  t.strictEqual(vec.length, 0);
+  t.end();
+});
+
 test("Vector should initialize from Vector, Object or Buffer", function(t) {
   var vec = new Vector({7: 0.25, 5: 0.75});
   t.strictEqual(vec.length, 2);
