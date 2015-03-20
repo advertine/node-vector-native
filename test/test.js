@@ -97,6 +97,30 @@ test("Vector should be comparable", function(t) {
   t.end();
 });
 
+test("Vector should be querable, deletable and enumerable", function(t) {
+  var vec = new Vector();
+  t.deepEqual(vec, {});
+
+  vec[7] = 0.25;
+  vec[5] = 0.75;
+  vec[3] = 0.15;
+
+  t.deepEqual(vec, {3: 0.15, 5: 0.75, 7: 0.25});
+
+  var vec2 = new Vector({7: 0.25, 5: 0.75, 3: 0.15});
+  t.deepEqual(vec2, {3: 0.15, 5: 0.75, 7: 0.25});
+  t.equal(+vec2, Math.sqrt(0.15*0.15 + 0.75*0.75 + 0.25*0.25));
+
+  t.strictEqual(5 in vec2, true);
+  t.strictEqual(delete vec2[5], true);
+  t.strictEqual(5 in vec2, false);
+  t.strictEqual(delete vec2[5], false);
+  t.deepEqual(vec2, {3: 0.15, 7: 0.25});
+  t.equal(+vec2, Math.sqrt(0.15*0.15 + 0.25*0.25));
+
+  t.end();
+});
+
 test("Vector should convert to Object", function(t) {
   var vec = new Vector();
   t.deepEqual(vec.toObject(), {});

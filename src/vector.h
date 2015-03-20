@@ -20,6 +20,8 @@ class Vector {
 
     void Set(vec_dim_pair_t const * ovec, size_t const vsize);
     void Set(vec_dim_t dim, vec_value_t value);
+    bool Has(vec_dim_t dim) const;
+    bool Delete(vec_dim_t dim);
     void Add(vec_dim_pair_t const * ovec, size_t const vsize);
     void Subtract(vec_dim_pair_t const * ovec, size_t const vsize);
 

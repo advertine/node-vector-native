@@ -3,6 +3,7 @@
 #include "nodevector.h"
 
 namespace NodeVector {
+  using v8::None;
   using v8::Handle;
   using v8::Local;
   using v8::Value;
@@ -10,6 +11,7 @@ namespace NodeVector {
   using v8::Array;
   using v8::Boolean;
   using v8::Number;
+  using v8::Integer;
   using v8::Uint32;
   using v8::String;
   using v8::Function;
@@ -39,7 +41,11 @@ namespace NodeVector {
     Local<ObjectTemplate> i_t = tpl->InstanceTemplate();
     i_t->SetInternalFieldCount(1);
 
-    i_t->SetIndexedPropertyHandler(GetDimension, SetDimension);
+    i_t->SetIndexedPropertyHandler( GetDimension,
+                                    SetDimension,
+                                    QueryDimension,
+                                    DeleteDimension,
+                                    EnumerateDimension );
 
     Local<ObjectTemplate> proto = tpl->PrototypeTemplate();
     proto->SetAccessor(NanNew<String>("length"), GetLength);
@@ -348,4 +354,34 @@ namespace NodeVector {
     NanReturnValue( value );
   }
 
+  NAN_INDEX_QUERY(NativeVector::QueryDimension)
+  {
+    NanScope();
+    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    if ( vector->Has(index) ) {
+      NanReturnValue( NanNew<Integer>(None) );
+    } else {
+      Local<Integer> empty;
+      NanReturnValue(empty);
+    }
+  }
+
+  NAN_INDEX_DELETER(NativeVector::DeleteDimension)
+  {
+    NanScope();
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    NanReturnValue( NanNew<Boolean>( vector->Delete( (vec_dim_t) index ) ) );
+  }
+
+  NAN_INDEX_ENUMERATOR(NativeVector::EnumerateDimension)
+  {
+    NanScope();
+    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    Local<Array> dimensions = NanNew<Array>( vector->Size() );
+    const DimValueMap::type &vec = vector->vec;
+    DimValueMap::type::const_iterator it = vec.begin();
+    for (uint32_t index = 0; it != vec.end(); ++it )
+      dimensions->Set( index++, NanNew<Uint32>(it->first) );
+    NanReturnValue(dimensions);
+  }
 }

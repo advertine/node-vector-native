@@ -39,6 +39,21 @@ void Vector::Set(vec_dim_t dim, vec_value_t value)
     vec[dim] = value;
 }
 
+bool Vector::Has(vec_dim_t dim) const
+{
+  return vec.count(dim) != 0;
+}
+
+bool Vector::Delete(vec_dim_t dim)
+{
+  DimValueMap::type::iterator it = vec.find(dim);
+  if ( it != vec.end() ) {
+    vec.erase(it);
+    return true;
+  }
+  return false;
+}
+
 void Vector::Add(vec_dim_pair_t const * ovec, size_t const vsize)
 {
   vec_dim_pair_t const * over = ovec + vsize, * ptr = ovec;

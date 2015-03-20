@@ -29,8 +29,6 @@ namespace NodeVector {
       static NAN_METHOD(Multiply);
       static NAN_METHOD(ScalarMultiply);
       static NAN_METHOD(Normalize);
-      static NAN_INDEX_GETTER(GetDimension);
-      static NAN_INDEX_SETTER(SetDimension);
       static NAN_METHOD(ValueOf);
       static NAN_METHOD(ToObject);
       static NAN_METHOD(GetBuffer);
@@ -39,6 +37,11 @@ namespace NodeVector {
       static NAN_GETTER(GetAverage);
       static NAN_GETTER(GetVariance);
       static NAN_GETTER(GetSigma);
+      static NAN_INDEX_GETTER(GetDimension);
+      static NAN_INDEX_SETTER(SetDimension);
+      static NAN_INDEX_QUERY(QueryDimension);
+      static NAN_INDEX_DELETER(DeleteDimension);
+      static NAN_INDEX_ENUMERATOR(EnumerateDimension);
 
     private:
       NAN_INLINE static void FreeBufferData(char *, void *data);
