@@ -19,7 +19,6 @@ Vector::Vector(vec_dim_pair_t const * inp, size_t const vsize)
 void Vector::Assign(vec_dim_pair_t const * inp, size_t const vsize)
 {
   vec_dim_pair_t const * over = inp + vsize, * ptr = inp;
-  DimValueMap::type::const_iterator it = vec.begin();
   for (; ptr != over; ++ptr ) {
     vec.insert( DimValueMap::type::value_type(ptr->dim, ptr->value) );
   }
