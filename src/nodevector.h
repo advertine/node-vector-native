@@ -11,15 +11,14 @@ namespace NodeVector {
   using v8::Handle;
   using v8::Local;
   using v8::FunctionTemplate;
-  using v8::Persistent;
   using v8::Object;
   using v8::Value;
 
-  class NativeVector: public node::ObjectWrap, public Vector {
+  class NativeVector: public Nan::ObjectWrap, public Vector {
     public:
-      static Persistent<FunctionTemplate> constructor;
+      static Nan::Persistent<FunctionTemplate> constructor;
 
-      static void Init(Handle<Object> exports);
+      static NAN_MODULE_INIT(Init);
       NativeVector(void);
       NativeVector(NativeVector const& ovec);
       NativeVector(vec_dim_pair_t const * ovec, size_t const vsize);

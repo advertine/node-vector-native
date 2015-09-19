@@ -4,7 +4,7 @@
   "keywords": [
     "vector"
   ],
-  "version": "0.0.0",
+  "version": "1.0.0",
   "license": "MIT",
   "author": "Rafał Michalski <royal@advertine.com>",
   "contributors": [],
@@ -14,18 +14,17 @@
     "url": "git://github.com/advertine/node-vector-native.git"
   },
   "scripts": {
-    "test": "tap-prettify ./test/test.js"
+    "test": "tap ./test/test.js"
   },
   "main": "index.js",
   "engines": {
     "node": ">=0.10.0"
   },
   "dependencies": {
-    "nan": "~1.6"
+    "nan": "^2.0.9"
   },
   "devDependencies": {
-    "tap": "~0.5",
-    "tap-prettify": "*",
+    "tap": "*",
     "ben": "*"
   }
 }

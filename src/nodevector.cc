@@ -9,7 +9,6 @@ namespace NodeVector {
   using v8::Value;
   using v8::Object;
   using v8::Array;
-  using v8::Boolean;
   using v8::Number;
   using v8::Integer;
   using v8::Uint32;
@@ -17,129 +16,134 @@ namespace NodeVector {
   using v8::Function;
   using v8::FunctionTemplate;
   using v8::ObjectTemplate;
-  using v8::Persistent;
   using v8::PropertyAttribute;
   using v8::ReadOnly;
   using v8::DontDelete;
-  using node::ObjectWrap;
+  using Nan::ObjectWrap;
 
-  Persistent<FunctionTemplate> NativeVector::constructor;
+  Nan::Persistent<FunctionTemplate> NativeVector::constructor;
 
   NativeVector::NativeVector(void) : Vector() {}
-  NativeVector::NativeVector(NativeVector const& ovec) : Vector(ovec) {}
+  NativeVector::NativeVector(NativeVector const& ovec) : ObjectWrap(), Vector(ovec) {}
   NativeVector::NativeVector(vec_dim_pair_t const * ovec, size_t const vsize)
-    : Vector(ovec, vsize) {};
+    : ObjectWrap(), Vector(ovec, vsize) {};
 
   NativeVector::~NativeVector(void) {}
 
-  void NativeVector::Init(Handle<Object> exports)
+  NAN_MODULE_INIT(NativeVector::Init)
   {
-    Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(New);
-    NanAssignPersistent( constructor, tpl );
-    tpl->SetClassName( NanNew<String>("Vector") );
+    Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(New);
+    tpl->SetClassName( Nan::New<String>("Vector").ToLocalChecked() );
 
     Local<ObjectTemplate> i_t = tpl->InstanceTemplate();
     i_t->SetInternalFieldCount(1);
 
-    i_t->SetIndexedPropertyHandler( GetDimension,
+    Nan::SetIndexedPropertyHandler( i_t,
+                                    GetDimension,
                                     SetDimension,
                                     QueryDimension,
                                     DeleteDimension,
                                     EnumerateDimension );
 
     Local<ObjectTemplate> proto = tpl->PrototypeTemplate();
-    proto->SetAccessor(NanNew<String>("length"), GetLength);
-    proto->SetAccessor(NanNew<String>("average"), GetAverage);
-    proto->SetAccessor(NanNew<String>("variance"), GetVariance);
-    proto->SetAccessor(NanNew<String>("sigma"), GetSigma);
+    Nan::SetAccessor(proto, Nan::New<String>("length").ToLocalChecked(),
+                            GetLength);
+    Nan::SetAccessor(proto, Nan::New<String>("average").ToLocalChecked(),
+                            GetAverage);
+    Nan::SetAccessor(proto, Nan::New<String>("variance").ToLocalChecked(),
+                            GetVariance);
+    Nan::SetAccessor(proto, Nan::New<String>("sigma").ToLocalChecked(),
+                            GetSigma);
 
-    NODE_SET_PROTOTYPE_METHOD(tpl, "clear", Clear);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "add", Add);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "multiply", Multiply);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "scalar", ScalarMultiply);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "normalize", Normalize);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "toObject", ToObject);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "valueOf", ValueOf);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "getBuffer", GetBuffer);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "equals", Equals);
+    Nan::SetPrototypeMethod(tpl, "clear", Clear);
+    Nan::SetPrototypeMethod(tpl, "add", Add);
+    Nan::SetPrototypeMethod(tpl, "multiply", Multiply);
+    Nan::SetPrototypeMethod(tpl, "scalar", ScalarMultiply);
+    Nan::SetPrototypeMethod(tpl, "normalize", Normalize);
+    Nan::SetPrototypeMethod(tpl, "toObject", ToObject);
+    Nan::SetPrototypeMethod(tpl, "valueOf", ValueOf);
+    Nan::SetPrototypeMethod(tpl, "getBuffer", GetBuffer);
+    Nan::SetPrototypeMethod(tpl, "equals", Equals);
 
-    tpl->Set( NanNew<String>("BYTEARRAY_ELEMENT_SIZE"),
-              NanNew<Uint32>((uint32_t) sizeof(vec_dim_pair_t)),
+    Nan::SetTemplate(tpl,
+              Nan::New<String>("BYTEARRAY_ELEMENT_SIZE").ToLocalChecked(),
+              Nan::New<Uint32>((uint32_t) sizeof(vec_dim_pair_t)),
               static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-    tpl->Set( NanNew<String>("BYTEARRAY_DIM_OFFSET"),
-              NanNew<Uint32>((int32_t) offsetof(vec_dim_pair_t, dim)),
+    Nan::SetTemplate(tpl,
+              Nan::New<String>("BYTEARRAY_DIM_OFFSET").ToLocalChecked(),
+              Nan::New<Uint32>((int32_t) offsetof(vec_dim_pair_t, dim)),
               static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
-    tpl->Set( NanNew<String>("BYTEARRAY_VALUE_OFFSET"),
-              NanNew<Uint32>((int32_t) offsetof(vec_dim_pair_t, value)),
+    Nan::SetTemplate(tpl,
+              Nan::New<String>("BYTEARRAY_VALUE_OFFSET").ToLocalChecked(),
+              Nan::New<Uint32>((int32_t) offsetof(vec_dim_pair_t, value)),
               static_cast<PropertyAttribute>(ReadOnly | DontDelete) );
 
-    exports->Set( NanNew<String>("Vector"), NanNew<FunctionTemplate>(constructor)->GetFunction() );
+    constructor.Reset( tpl );
+    Nan::Set(target, Nan::New<String>("Vector").ToLocalChecked(),
+                     Nan::GetFunction(tpl).ToLocalChecked());
   }
 
   NAN_METHOD(NativeVector::New)
   {
-    NanScope();
 
-    if ( args.IsConstructCall() ) {
+    if ( info.IsConstructCall() ) {
 
       NativeVector *vector;
 
-      if ( args.Length() > 0 ) {
-        if ( node::Buffer::HasInstance(args[0]) ) {
-          Local<Object> buffer = args[0].As<Object>();
+      if ( info.Length() > 0 ) {
+        if ( node::Buffer::HasInstance(info[0]) ) {
+          Local<Object> buffer = info[0].As<Object>();
           vector = new NativeVector(
             (vec_dim_pair_t *)node::Buffer::Data(buffer),
             node::Buffer::Length(buffer) / sizeof(vec_dim_pair_t) );
-        } else if ( args[0]->IsObject() ) {
-          if ( NanHasInstance(NativeVector::constructor, args[0]) ) {
-            NativeVector const *other = ObjectWrap::Unwrap<NativeVector>( args[0].As<Object>() );
+        } else if ( info[0]->IsObject() ) {
+          if ( Nan::New(constructor)->HasInstance( info[0] ) ) {
+            NativeVector const *other = ObjectWrap::Unwrap<NativeVector>( info[0].As<Object>() );
             vector = new NativeVector(*other);
           } else {
             vector = new NativeVector();
-            vector->AssignFromJSObject( args[0].As<Object>() );
+            vector->AssignFromJSObject( info[0].As<Object>() );
           }
-        } else if ( args[0]->IsNull() || args[0]->IsUndefined() ) {
+        } else if ( info[0]->IsNull() || info[0]->IsUndefined() ) {
           vector = new NativeVector();
         } else
-          return NanThrowTypeError("first argument should be a Buffer or an Object");
+          return Nan::ThrowTypeError("first argument should be a Buffer or an Object");
       } else
         vector = new NativeVector();
 
-      vector->Wrap( args.This() );
-      NanReturnValue( args.This() );
+      vector->Wrap( info.This() );
+      info.GetReturnValue().Set( info.This() );
 
     } else {
-      int argc = args.Length();
+      int argc = info.Length();
       Local<Value> argv[1];
       if (argc > 0) {
-        argv[0] = args[0];
+        argv[0] = info[0];
         if (argc > 1) argc = 1;
       }
-      NanReturnValue(
-        NanNew<FunctionTemplate>(constructor)->GetFunction()->NewInstance(argc, argv) );
+      Local<Function> cons = Nan::GetFunction(Nan::New(constructor)).ToLocalChecked();
+      info.GetReturnValue().Set( Nan::NewInstance(cons, argc, &argv[0]).ToLocalChecked() );
     }
   }
 
   NAN_METHOD(NativeVector::ValueOf)
   {
-    NanScope();
-    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
-    NanReturnValue( NanNew<Number>( +(*vector) ) );
+    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
+    info.GetReturnValue().Set( +(*vector) );
   }
 
   NAN_METHOD(NativeVector::ToObject)
   {
-    NanScope();
-    Local<Object> object( NanNew<Object>() );
-    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    Local<Object> object( Nan::New<Object>() );
+    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
 
     const DimValueMap::type &vec = vector->vec;
     DimValueMap::type::const_iterator it = vec.begin();
     for (; it != vec.end(); ++it ) {
-      object->Set( it->first, NanNew<Number>(it->second) );
+      Nan::Set(object, it->first, Nan::New<Number>(it->second) );
     }
 
-    NanReturnValue(object);
+    info.GetReturnValue().Set(object);
   }
 
   NAN_INLINE void NativeVector::FreeBufferData(char *, void *data) {
@@ -148,9 +152,8 @@ namespace NodeVector {
 
   NAN_METHOD(NativeVector::GetBuffer)
   {
-    NanScope();
 
-    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
 
     size_t orig_count = vector->Size(), orig_size = orig_count * sizeof(vec_dim_pair_t);
 
@@ -158,8 +161,8 @@ namespace NodeVector {
 
     vec_value_t cutoff = 0.0;
 
-    if ( args.Length() > 0 && args[0]->IsNumber() ) {
-      cutoff = (vec_value_t) args[0]->NumberValue();
+    if ( info.Length() > 0 && info[0]->IsNumber() ) {
+      cutoff = (vec_value_t) info[0]->NumberValue();
       vec_value_t average;
       cutoff *= vector->sigma(&average);
       cutoff = average - cutoff;
@@ -167,10 +170,10 @@ namespace NodeVector {
 
     size_t count = vector->CopyToArray( vecdata, orig_count, cutoff );
 
-    if ( args.Length() > 1 && args[1]->BooleanValue() ) {
+    if ( info.Length() > 1 && info[1]->BooleanValue() ) {
       vec_sort_by_value_desc( vecdata, count );
-      if ( args[1]->IsNumber() ) {
-        count = std::min( count, (size_t) args[1]->IntegerValue() );
+      if ( info[1]->IsNumber() ) {
+        count = std::min( count, (size_t) info[1]->IntegerValue() );
       }
     }
 
@@ -179,74 +182,75 @@ namespace NodeVector {
     if ( size != orig_size )
       vecdata = (vec_dim_pair_t *) realloc(vecdata, size);
 
-    Local<Object> buffer( NanNewBufferHandle( (char *) vecdata, size,
-                          (NanFreeCallback) FreeBufferData, (void *)vecdata ) );
+    Nan::MaybeLocal<Object> buffer( Nan::NewBuffer( (char *) vecdata, size,
+                          (Nan::FreeCallback) FreeBufferData,
+                          (void *)vecdata ));
 
-    NanReturnValue(buffer);
+    if (buffer.IsEmpty())
+      return Nan::ThrowError("couldn't allocate buffer for vector");
+    else
+      info.GetReturnValue().Set(buffer.ToLocalChecked());
   }
 
   void NativeVector::AssignFromJSObject(Handle<Object> object)
   {
-    Local<Array> names( object->GetPropertyNames() );
+    Local<Array> names( Nan::GetPropertyNames(object).ToLocalChecked() );
     int size = names->Length();
     while (size-- > 0) {
-      Local<Value> veckey(names->Get(size));
-      this->Set( veckey->Uint32Value(), object->Get(veckey)->NumberValue() );
+      Local<Value> veckey(Nan::Get(names, size).ToLocalChecked());
+      this->Set( veckey->Uint32Value(), Nan::Get(object, veckey).ToLocalChecked()->NumberValue() );
     }
   }
 
   bool NativeVector::Add(Local<Value> value)
   {
-    NanScope();
 
     if (node::Buffer::HasInstance(value)) {
       Local<Object> buffer = value.As<Object>();
       this->Vector::Add(  (vec_dim_pair_t *)node::Buffer::Data(buffer),
                     node::Buffer::Length(buffer) / sizeof(vec_dim_pair_t) );
-    } else if ( NanHasInstance(NativeVector::constructor, value) ) {
+    } else if ( Nan::New(constructor)->HasInstance(value) ) {
       Vector const *other = ObjectWrap::Unwrap<NativeVector>( value.As<Object>() );
       (*this) += (*other);
     } else if ( value->IsArray() ) {
       Local<Array> array( value.As<Array>() );
       for (int n = array->Length(); n-- != 0; ) {
-        if ( ! this->Add( array->Get(n) ) )
+        if ( ! this->Add( Nan::Get(array, n).ToLocalChecked() ) )
           break;
       }
     } else
       return false;
+
     return true;
   }
 
   NAN_METHOD(NativeVector::Add)
   {
-    NanScope();
 
-    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
 
-    if ( args.Length() > 0 ) {
-      if ( ! vector->Add( args[0] ) )
-        return NanThrowTypeError("first argument should be a Buffer, Vector or an Array");
+    if ( info.Length() > 0 ) {
+      if ( ! vector->Add( info[0] ) )
+        return Nan::ThrowTypeError("first argument should be a Buffer, Vector or an Array");
     }
 
-    NanReturnValue( args.This() );
+    info.GetReturnValue().Set( info.This() );
   }
 
   NAN_METHOD(NativeVector::Clear)
   {
-    NanScope();
 
-    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
 
     vector->Vector::Clear();
 
-    NanReturnValue( args.This() );
+    info.GetReturnValue().Set( info.This() );
   }
 
   bool NativeVector::Multiply(Local<Value> value)
   {
-    NanScope();
 
-    if ( NanHasInstance(NativeVector::constructor, value) ) {
+    if ( Nan::New(constructor)->HasInstance(value) ) {
       NativeVector const *other = ObjectWrap::Unwrap<NativeVector>( value.As<Object>() );
       (*this) *= (*other);
     } else if ( value->IsNumber() ) {
@@ -254,146 +258,129 @@ namespace NodeVector {
     } else if ( value->IsArray() ) {
       Local<Array> array( value.As<Array>() );
       for (int n = array->Length(); n-- != 0; ) {
-        if ( ! this->Multiply( array->Get(n) ) )
+        if ( ! this->Multiply( Nan::Get(array, n).ToLocalChecked() ) )
           break;
       }
     } else
       return false;
+
     return true;
   }
 
   NAN_METHOD(NativeVector::Multiply)
   {
-    NanScope();
 
-    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
 
-    if ( args.Length() > 0 ) {
-      if ( ! vector->Multiply( args[0] ) )
-        return NanThrowTypeError("first argument should be a Number, Vector or an Array");
+    if ( info.Length() > 0 ) {
+      if ( ! vector->Multiply( info[0] ) )
+        return Nan::ThrowTypeError("first argument should be a Number, Vector or an Array");
     }
 
-    NanReturnValue( args.This() );
+    info.GetReturnValue().Set( info.This() );
   }
 
   NAN_METHOD(NativeVector::ScalarMultiply)
   {
-    NanScope();
 
-    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
 
-    if ( args.Length() > 0 &&
-          NanHasInstance(NativeVector::constructor, args[0]) ) {
-      Vector const *other = ObjectWrap::Unwrap<NativeVector>( args[0].As<Object>() );
-      NanReturnValue( NanNew<Number>( (*vector) * (*other) ) );
-    }
-
-    return NanThrowTypeError("first argument should be a Vector");
+    if ( info.Length() > 0 &&
+          Nan::New(constructor)->HasInstance( info[0] ) ) {
+      Vector const *other = ObjectWrap::Unwrap<NativeVector>( info[0].As<Object>() );
+      info.GetReturnValue().Set( (*vector) * (*other) );
+    } else
+      return Nan::ThrowTypeError("first argument should be a Vector");
   }
 
   NAN_METHOD(NativeVector::Normalize)
   {
-    NanScope();
 
-    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
 
     vec_value_t sum;
 
-    if ( args.Length() > 0 ) {
-      sum = args[0]->NumberValue();
+    if ( info.Length() > 0 ) {
+      sum = info[0]->NumberValue();
     } else {
       sum = +(*vector);
     }
 
     (*vector) /= sum;
 
-    NanReturnValue( args.This() );
+    info.GetReturnValue().Set( info.This() );
   }
 
   NAN_METHOD(NativeVector::Equals)
   {
-    NanScope();
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
 
-    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
-    if ( args.Length() > 0 && NanHasInstance(NativeVector::constructor, args[0]) ) {
-      NativeVector const *other = ObjectWrap::Unwrap<NativeVector>( args[0].As<Object>() );
-      NanReturnValue( NanNew<Boolean>(*vector == *other) );
-    }
-
-    NanReturnValue( NanFalse() );
+    if ( info.Length() > 0 && Nan::New(constructor)->HasInstance( info[0] ) ) {
+      NativeVector const *other = ObjectWrap::Unwrap<NativeVector>( info[0].As<Object>() );
+      info.GetReturnValue().Set( *vector == *other );
+    } else
+      info.GetReturnValue().Set(false);
   }
 
   NAN_GETTER(NativeVector::GetLength)
   {
-    NanScope();
-    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
-    NanReturnValue( NanNew<Uint32>( (unsigned int) vector->Size() ) );
+    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
+    info.GetReturnValue().Set( Nan::New<Uint32>( (unsigned int) vector->Size() ) );
   }
 
   NAN_GETTER(NativeVector::GetAverage)
   {
-    NanScope();
-    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
-    NanReturnValue( NanNew<Number>( vector->average() ) );
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
+    info.GetReturnValue().Set( vector->average() );
   }
 
   NAN_GETTER(NativeVector::GetVariance)
   {
-    NanScope();
-    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
-    NanReturnValue( NanNew<Number>( vector->variance() ) );
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
+    info.GetReturnValue().Set( vector->variance() );
   }
 
   NAN_GETTER(NativeVector::GetSigma)
   {
-    NanScope();
-    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
-    NanReturnValue( NanNew<Number>( vector->sigma() ) );
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
+    info.GetReturnValue().Set( vector->sigma() );
   }
 
   NAN_INDEX_GETTER(NativeVector::GetDimension)
   {
-    NanScope();
-    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
-    NanReturnValue( NanNew<Number>( (*vector)[index] ) );
+    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
+    info.GetReturnValue().Set( (*vector)[index] );
   }
 
   NAN_INDEX_SETTER(NativeVector::SetDimension)
   {
-    NanScope();
-    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
     vector->Set(index, value->NumberValue());
-    NanReturnValue( value );
+    info.GetReturnValue().Set( info.This() );
   }
 
   NAN_INDEX_QUERY(NativeVector::QueryDimension)
   {
-    NanScope();
-    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
+    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
     if ( vector->Has(index) ) {
-      NanReturnValue( NanNew<Integer>(None) );
-    } else {
-      Local<Integer> empty;
-      NanReturnValue(empty);
+      info.GetReturnValue().Set( Nan::New<Integer>(None) );
     }
   }
 
   NAN_INDEX_DELETER(NativeVector::DeleteDimension)
   {
-    NanScope();
-    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
-    NanReturnValue( NanNew<Boolean>( vector->Delete( (vec_dim_t) index ) ) );
+    NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
+    info.GetReturnValue().Set( vector->Delete( (vec_dim_t) index ) );
   }
 
   NAN_INDEX_ENUMERATOR(NativeVector::EnumerateDimension)
   {
-    NanScope();
-    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( args.This() );
-    Local<Array> dimensions = NanNew<Array>( vector->Size() );
+    NativeVector const *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
+    Local<Array> dimensions = Nan::New<Array>( (int) vector->Size() );
     const DimValueMap::type &vec = vector->vec;
     DimValueMap::type::const_iterator it = vec.begin();
     for (uint32_t index = 0; it != vec.end(); ++it )
-      dimensions->Set( index++, NanNew<Uint32>(it->first) );
-    NanReturnValue(dimensions);
+      Nan::Set(dimensions, index++, Nan::New<Uint32>(it->first) );
+    info.GetReturnValue().Set(dimensions);
   }
 }
