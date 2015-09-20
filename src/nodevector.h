@@ -13,10 +13,12 @@ namespace NodeVector {
   using v8::FunctionTemplate;
   using v8::Object;
   using v8::Value;
+  using Nan::ObjectWrap;
+  using Nan::Persistent;
 
-  class NativeVector: public Nan::ObjectWrap, public Vector {
+  class NativeVector: public ObjectWrap, public Vector {
     public:
-      static Nan::Persistent<FunctionTemplate> constructor;
+      static Persistent<FunctionTemplate> constructor;
 
       static NAN_MODULE_INIT(Init);
       NativeVector(void);

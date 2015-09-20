@@ -19,9 +19,8 @@ namespace NodeVector {
   using v8::PropertyAttribute;
   using v8::ReadOnly;
   using v8::DontDelete;
-  using Nan::ObjectWrap;
 
-  Nan::Persistent<FunctionTemplate> NativeVector::constructor;
+  Persistent<FunctionTemplate> NativeVector::constructor;
 
   NativeVector::NativeVector(void) : Vector() {}
   NativeVector::NativeVector(NativeVector const& ovec) : ObjectWrap(), Vector(ovec) {}
@@ -162,22 +161,27 @@ namespace NodeVector {
     vec_value_t cutoff = 0.0;
 
     if ( info.Length() > 0 && info[0]->IsNumber() ) {
-      cutoff = (vec_value_t) info[0]->NumberValue();
+      cutoff = (vec_value_t) Nan::To<double>(info[0]).FromMaybe(0.0);
       vec_value_t average;
       cutoff *= vector->sigma(&average);
       cutoff = average - cutoff;
     }
 
-    size_t count = vector->CopyToArray( vecdata, orig_count, cutoff );
+    ssize_t count = vector->CopyToArray( vecdata, orig_count, cutoff );
 
-    if ( info.Length() > 1 && info[1]->BooleanValue() ) {
+    if ( info.Length() > 1 && Nan::To<bool>(info[1]).FromMaybe(false) ) {
       vec_sort_by_value_desc( vecdata, count );
       if ( info[1]->IsNumber() ) {
-        count = std::min( count, (size_t) info[1]->IntegerValue() );
+        count = std::min( count,
+                  std::max(
+                    static_cast<ssize_t>(Nan::To<int64_t>(info[1]).FromMaybe(static_cast<int64_t>(count))),
+                    static_cast<ssize_t>(0)
+                  )
+                );
       }
     }
 
-    size_t size = count * sizeof(vec_dim_pair_t);
+    size_t size = (unsigned) count * sizeof(vec_dim_pair_t);
 
     if ( size != orig_size )
       vecdata = (vec_dim_pair_t *) realloc(vecdata, size);
@@ -194,11 +198,18 @@ namespace NodeVector {
 
   void NativeVector::AssignFromJSObject(Handle<Object> object)
   {
-    Local<Array> names( Nan::GetPropertyNames(object).ToLocalChecked() );
-    int size = names->Length();
-    while (size-- > 0) {
-      Local<Value> veckey(Nan::Get(names, size).ToLocalChecked());
-      this->Set( veckey->Uint32Value(), Nan::Get(object, veckey).ToLocalChecked()->NumberValue() );
+    Local<Array> names;
+    if ( Nan::GetPropertyNames(object).ToLocal(&names) ) {
+      int size = names->Length();
+      Local<Value> vecdim, vecval;
+      while (size-- > 0) {
+        if ( Nan::Get(names, size).ToLocal(&vecdim) && vecdim->IsUint32() &&
+             Nan::Get(object, vecdim).ToLocal(&vecval) ) {
+
+          this->Set( Nan::To<vec_dim_t>(vecdim).FromJust(),
+                     Nan::To<vec_value_t>(vecval).FromMaybe(0.0) );
+        }
+      }
     }
   }
 
@@ -254,11 +265,11 @@ namespace NodeVector {
       NativeVector const *other = ObjectWrap::Unwrap<NativeVector>( value.As<Object>() );
       (*this) *= (*other);
     } else if ( value->IsNumber() ) {
-      (*this) *= (vec_value_t) value->NumberValue();
+      (*this) *= Nan::To<vec_value_t>(value).FromMaybe(0.0);
     } else if ( value->IsArray() ) {
       Local<Array> array( value.As<Array>() );
       for (int n = array->Length(); n-- != 0; ) {
-        if ( ! this->Multiply( Nan::Get(array, n).ToLocalChecked() ) )
+        if ( ! Nan::Get(array, n).ToLocal(&value) || ! this->Multiply(value) )
           break;
       }
     } else
@@ -301,7 +312,7 @@ namespace NodeVector {
     vec_value_t sum;
 
     if ( info.Length() > 0 ) {
-      sum = info[0]->NumberValue();
+      sum = Nan::To<vec_value_t>(info[0]).FromMaybe(0.0);
     } else {
       sum = +(*vector);
     }
@@ -355,7 +366,7 @@ namespace NodeVector {
   NAN_INDEX_SETTER(NativeVector::SetDimension)
   {
     NativeVector *vector = ObjectWrap::Unwrap<NativeVector>( info.This() );
-    vector->Set(index, value->NumberValue());
+    vector->Set(index, Nan::To<vec_value_t>(value).FromMaybe(0.0));
     info.GetReturnValue().Set( info.This() );
   }
 
