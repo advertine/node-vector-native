@@ -64,7 +64,7 @@ in bindings.gyp:
 Bugs, limitations, caveats
 --------------------------
 
-Tested with nodejs: v0.10, v0.11, v0.12, v4 and iojs-3.
+Tested with nodejs: v0.10, v0.11, v0.12, iojs-3 and v4.
 
 [Build Status]: https://travis-ci.org/advertine/node-vector-native
 [BS img]: https://travis-ci.org/advertine/node-vector-native.svg
